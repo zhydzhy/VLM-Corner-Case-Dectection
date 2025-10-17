@@ -1,0 +1,958 @@
+@prefix : <http://purl.org/ontology/avcc#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix ex: <http://cornercase.org/instances#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix avcc: <http://purl.org/ontology/avcc#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix avcco: <http://cornercase.org/avcco#> .
+@base <http://purl.org/ontology/avcc#> .
+
+<http://purl.org/ontology/avcc> rdf:type owl:Ontology ;
+                                 dc:contributor "University of California, Irvine (UCI)" ;
+                                 dc:creator "Malik Luti" ;
+                                 dc:date "2025-04-04"^^xsd:date ;
+                                 rdfs:comment "An OWL ontology developed as part of PhD research to formally describe and analyze corner cases in autonomous driving systems." ;
+                                 rdfs:label "Autonomous Vehicle Corner Case Ontology" ;
+                                 owl:versionInfo "v1.0" .
+
+#################################################################
+#    Annotation properties
+#################################################################
+
+###  http://purl.org/dc/elements/1.1/contributor
+dc:contributor rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/dc/elements/1.1/creator
+dc:creator rdf:type owl:AnnotationProperty .
+
+
+###  http://purl.org/dc/elements/1.1/date
+dc:date rdf:type owl:AnnotationProperty .
+
+
+#################################################################
+#    Datatypes
+#################################################################
+
+###  http://www.w3.org/2001/XMLSchema#date
+xsd:date rdf:type rdfs:Datatype .
+
+
+#################################################################
+#    Object Properties
+#################################################################
+
+###  http://cornercase.org/avcco#appliesToRegion
+avcco:appliesToRegion rdf:type owl:ObjectProperty ;
+                      rdfs:domain avcco:CornerCaseAlert ;
+                      rdfs:range avcco:GeoRegion ;
+                      rdfs:comment "Geospatial region in which the alert is considered relevant." ;
+                      rdfs:label "appliesToRegion" .
+
+
+###  http://cornercase.org/avcco#belief
+avcco:belief rdf:type owl:ObjectProperty ;
+             rdfs:domain avcco:Situation ;
+             rdfs:range avcco:ClassBelief ;
+             rdfs:comment "Links a Situation to one or more ClassBelief entries (e.g., top-2/3)." ;
+             rdfs:label "belief" .
+
+
+###  http://cornercase.org/avcco#class
+avcco:class rdf:type owl:ObjectProperty ;
+            rdfs:domain avcco:ClassBelief ;
+            rdfs:range owl:Class ;
+            rdfs:comment "The AVCCO class hypothesized by this belief entry." ;
+            rdfs:label "class" .
+
+
+###  http://cornercase.org/avcco#deliveredBy
+avcco:deliveredBy rdf:type owl:ObjectProperty ;
+                  rdfs:domain avcco:CornerCaseAlert ;
+                  rdfs:range avcco:EdgeBroker ;
+                  rdfs:comment "EdgeBroker that delivered (broadcast) the alert." ;
+                  rdfs:label "deliveredBy" .
+
+
+###  http://cornercase.org/avcco#hasActor
+avcco:hasActor rdf:type owl:ObjectProperty ;
+               rdfs:domain avcco:CornerCase ;
+               rdfs:range avcco:Vehicle ;
+               rdfs:comment """Links a corner case to the primary actor involved in or affected by the scenario, such as a vehicle, pedestrian, or other road user.
+
+This property identifies the agent whose behavior, presence, or status is relevant to the anomaly. The agent may be responsible for triggering the event, may be at risk, or may represent the ego vehicle (autonomous system) observing or reacting to the situation.
+
+cornercases:
+- A pedestrian crossing unexpectedly in front of the AV.
+- A vehicle merging without signaling.
+- An emergency vehicle speeding through an intersection.
+- A parked vehicle partially blocking the AV's line of sight.
+- The AV itself failing to detect an object due to limited visibility.
+
+Typically connects a CornerCase to an instance of an agent class such as Vehicle, Pedestrian, or AutonomousVehicle.""" .
+
+
+###  http://cornercase.org/avcco#hasCondition
+avcco:hasCondition rdf:type owl:ObjectProperty ;
+                   rdfs:domain avcco:CornerCase ;
+                   rdfs:range avcco:WeatherCondition ;
+                   rdfs:comment """Associates a corner case with the environmental or atmospheric conditions that influence the scenario and may contribute to perception errors or decision complexity.
+
+Conditions such as fog, rain, low lighting, or glare can affect sensor performance, visibility, and object detection. This property enables the modeling of corner cases where weather or visibility is a critical factor, even if all agents behave normally.
+
+cornercases:
+- Fog obscuring a pedestrian, leading to delayed detection.
+- Heavy rain affecting LiDAR reflectivity and road marking visibility.
+- Nighttime driving with insufficient ambient lighting.
+- Glare from the sun impairing camera-based traffic sign recognition.
+- Snow covering lane markings or traffic signals.
+
+Typically connects a CornerCase to one or more instances of EnvironmentalCondition or its subclasses such as Foggy, Night, or LowVisibility.""" .
+
+
+###  http://cornercase.org/avcco#hasContext
+avcco:hasContext rdf:type owl:ObjectProperty ;
+                 rdfs:domain avcco:CornerCase ;
+                 rdfs:range avcco:Context ;
+                 rdfs:comment """Links a corner case to additional situational or contextual information that helps explain or qualify the nature of the anomaly.
+
+Context provides interpretive background, such as temporal windows, spatial layout, social cues, or implicit environmental conditions. It enriches the semantics of a corner case by capturing external factors that increase risk or complexity, even if they are not visible or directly triggering the event.
+
+cornercases:
+- A school zone during dismissal time, increasing pedestrian unpredictability.
+- A blind corner that limits visibility regardless of lighting or weather.
+- A temporary road construction site creating confusion in lane markings.
+- A cluttered urban environment that reduces sensor reliability.
+- A rural road with limited GPS signal and no lane markings.
+
+This property typically connects a CornerCase to an instance of the Context class, which may include attributes like location type, time of day, or situational modifiers.""" .
+
+
+###  http://cornercase.org/avcco#hasEvidence
+avcco:hasEvidence rdf:type owl:ObjectProperty ;
+                  rdfs:domain avcco:Observation ;
+                  rdfs:range avcco:SensorModality ;
+                  rdfs:comment "Links an Observation to sensor data (e.g., CameraFeed, LiDARPointCloud, FusedSensorData)." ;
+                  rdfs:label "hasEvidence" .
+
+
+###  http://cornercase.org/avcco#hasKinematics
+avcco:hasKinematics rdf:type owl:ObjectProperty ;
+                    rdfs:domain avcco:Observation ;
+                    rdfs:range avcco:KinematicState ;
+                    rdfs:comment "Associates an Observation with the vehicle kinematic state at the time of sensing." ;
+                    rdfs:label "hasKinematics" .
+
+
+###  http://cornercase.org/avcco#hasObservation
+avcco:hasObservation rdf:type owl:ObjectProperty ;
+                     rdfs:domain avcco:Situation ;
+                     rdfs:range avcco:Observation ;
+                     rdfs:comment "Associates a Situation with one or more supporting Observations." ;
+                     rdfs:label "hasObservation" .
+
+
+###  http://cornercase.org/avcco#hasObstacle
+avcco:hasObstacle rdf:type owl:ObjectProperty ;
+                  rdfs:domain avcco:CornerCase ;
+                  rdfs:comment """Links a corner case to an obstacle that interferes with the AV’s path, visibility, or safe navigation.
+
+Obstacles can be static or dynamic, expected or unexpected, and may contribute to the complexity of the corner case by partially blocking perception, requiring evasive maneuvers, or creating uncertainty in path planning.
+
+cornercases:
+- A suitcase fallen from a moving car into the AV’s lane.
+- A barrel dropped by a courier in a delivery zone.
+- A parked vehicle obstructing the AV’s field of view at an intersection.
+- A partially opened car door encroaching into the driving lane.
+- Road debris or an animal crossing unexpectedly.
+
+This property typically connects a CornerCase to an instance of the Obstacle class, which may be further described by properties such as position, movement, or visibility.""" .
+
+
+###  http://cornercase.org/avcco#hasOccludedEntity
+avcco:hasOccludedEntity rdf:type owl:ObjectProperty ;
+                        rdfs:domain avcco:OcclusionEvent ;
+                        rdfs:range avcco:Vehicle ;
+                        rdfs:comment "Links an occlusion event to the object that is being occluded." .
+
+
+###  http://cornercase.org/avcco#hasOccluder
+avcco:hasOccluder rdf:type owl:ObjectProperty ;
+                  rdfs:domain avcco:OcclusionEvent ;
+                  rdfs:range avcco:Vehicle ;
+                  rdfs:comment "Links an occlusion event to the object causing the occlusion." .
+
+
+###  http://cornercase.org/avcco#hasSensorEvidence
+avcco:hasSensorEvidence rdf:type owl:ObjectProperty ;
+                        rdfs:domain avcco:CornerCase ;
+                        rdfs:range avcco:SensorModality ;
+                        rdfs:comment """Associates a corner case with the sensor data used to observe or interpret the scenario.
+
+This property captures the raw or processed perception evidence (e.g., camera images, LiDAR point clouds, radar frames, fused sensor outputs) that the autonomous vehicle relied on during the event. It is critical for understanding what the AV perceived — correctly or incorrectly — and serves as the basis for reproducing, analyzing, or explaining system behavior.
+
+cornercases:
+- A camera frame showing a pedestrian partially occluded in fog.
+- A LiDAR point cloud indicating the sudden appearance of a foreign object.
+- Fused sensor data combining radar and vision inputs during a lane merge.
+- A low-confidence detection from a camera that missed a STOP sign.
+
+Typically connects a CornerCase to an instance of SensorData or one of its subclasses such as CameraFeed, LiDARPointCloud, or FusedSensorData.""" .
+
+
+###  http://cornercase.org/avcco#hasTriggerEvent
+avcco:hasTriggerEvent rdf:type owl:ObjectProperty ;
+                      rdfs:domain avcco:CornerCase ,
+                                  avcco:OcclusionEvent ;
+                      rdfs:comment """Associates a corner case with the specific event that triggered or initiated it.
+
+This property provides a causal link between a scenario and the dynamic occurrence that made it a corner case, such as a pedestrian crossing, a vehicle cut-in, or an animal suddenly entering the roadway.
+
+cornercases:
+- A pedestrian unexpectedly crossing at night triggers a perception failure.
+- A vehicle merging without signaling causes an unexpected behavior anomaly.
+- A suitcase falling into the lane initiates an evidence-based anomaly.
+
+Typically connects a CornerCase to an instance of the Event class or one of its subclasses.""" .
+
+
+###  http://cornercase.org/avcco#issuedBy
+avcco:issuedBy rdf:type owl:ObjectProperty ;
+               rdfs:domain avcco:CornerCaseAlert ;
+               rdfs:range prov:Agent ;
+               rdfs:comment "Agent (vehicle) that issued the CornerCaseAlert." ;
+               rdfs:label "issuedBy" .
+
+
+###  http://cornercase.org/avcco#occursAt
+avcco:occursAt rdf:type owl:ObjectProperty ;
+               rdfs:domain avcco:CornerCase ;
+               rdfs:range avcco:RoadElement ;
+               rdfs:comment """Links a corner case to the road element or physical location where the event occurs.
+
+This property captures spatial context critical for interpreting the nature of the corner case, including layout constraints, visibility conditions, and proximity to relevant traffic infrastructure.
+
+cornercases:
+- A pedestrian crossing event that occurs at an urban intersection.
+- A vehicle cut-in that occurs at a highway merge point.
+- A luggage-falling scenario that happens near a curved ramp or road shoulder.
+
+Typically connects a CornerCase instance to a RoadElement such as Intersection, Crosswalk, Curb, or ParkingZone.""" .
+
+
+###  http://cornercase.org/avcco#primaryBelief
+avcco:primaryBelief rdf:type owl:ObjectProperty ,
+                             owl:FunctionalProperty ;
+                    rdfs:domain avcco:Situation ;
+                    rdfs:range avcco:ClassBelief ;
+                    rdfs:comment "The single ClassBelief entry representing the current best hypothesis." ;
+                    rdfs:label "primaryBelief" .
+
+
+###  http://cornercase.org/avcco#state
+avcco:state rdf:type owl:ObjectProperty ;
+            rdfs:domain avcco:Situation ;
+            rdfs:range avcco:SituationState ;
+            rdfs:comment "Agreement state derived at the edge (AGREE, CONTENT., CONFLICT)." ;
+            rdfs:label "state" .
+
+
+###  http://cornercase.org/avcco#triggersOcclusion
+avcco:triggersOcclusion rdf:type owl:ObjectProperty ;
+                        rdfs:domain avcco:OcclusionEvent ;
+                        rdfs:range avcco:PerceptionFailureCase ,
+                                   avcco:SensorBlindSpotCase ;
+                        rdfs:comment "Links an occlusion event to the corner case it triggers." .
+
+
+###  http://purl.org/ontology/avcc#hasViolation
+avcc:hasViolation rdf:type owl:ObjectProperty ;
+                  rdfs:domain avcco:Vehicle ;
+                  rdfs:range avcc:TrafficViolation ;
+                  rdfs:comment "Associates a corner case with one or more traffic violations that contributed to the event." .
+
+
+###  http://purl.org/ontology/mydomain.com#hasConfidenceScore
+<http://purl.org/ontology/mydomain.com#hasConfidenceScore> rdf:type owl:ObjectProperty ;
+                                                           rdfs:domain avcco:BehaviorAnomaly ,
+                                                                       avcco:CornerCase ,
+                                                                       avcco:EvidenceBasedAnomaly ,
+                                                                       avcco:PerceptionFailureCase ,
+                                                                       avcco:SensorBlindSpotCase ,
+                                                                       avcco:StateAnomaly ,
+                                                                       avcco:VisualAmbiguityCase ;
+                                                           rdfs:range [ rdf:type owl:Restriction ;
+                                                                        owl:onProperty avcco:confidenceScore ;
+                                                                        owl:someValuesFrom xsd:decimal
+                                                                      ] .
+
+
+###  http://www.w3.org/ns/prov#wasAssociatedWith
+prov:wasAssociatedWith rdf:type owl:ObjectProperty ;
+                       rdfs:domain prov:Activity ;
+                       rdfs:range prov:Agent ;
+                       rdfs:comment "Links a generation activity to the agent (vehicle or software) that performed it." ;
+                       rdfs:label "wasAssociatedWith" .
+
+
+###  http://www.w3.org/ns/prov#wasGeneratedBy
+prov:wasGeneratedBy rdf:type owl:ObjectProperty ;
+                    rdfs:domain prov:Entity ;
+                    rdfs:range prov:Activity ;
+                    rdfs:comment "Links an entity (e.g., a corner-case triple) to the generating activity." ;
+                    rdfs:label "wasGeneratedBy" .
+
+
+###  mydomain.com#hasSituation
+<mydomain.com#hasSituation> rdf:type owl:ObjectProperty ;
+                            rdfs:domain avcco:CornerCaseAlert ;
+                            rdfs:range avcco:Situation ;
+                            rdfs:comment "Links a CornerCaseAlert to the Situation it describes." ;
+                            rdfs:label "hasSituation" .
+
+
+#################################################################
+#    Data properties
+#################################################################
+
+###  http://cornercase.org/avcco#centerLat
+avcco:centerLat rdf:type owl:DatatypeProperty ;
+                rdfs:domain avcco:GeoRegion ;
+                rdfs:range xsd:float ;
+                rdfs:comment "Latitude of the center of the geofence region (WGS84)." ;
+                rdfs:label "centerLat" .
+
+
+###  http://cornercase.org/avcco#centerLon
+avcco:centerLon rdf:type owl:DatatypeProperty ;
+                rdfs:domain avcco:GeoRegion ;
+                rdfs:range xsd:float ;
+                rdfs:comment "Longitude of the center of the geofence region (WGS84)." ;
+                rdfs:label "centerLon" .
+
+
+###  http://cornercase.org/avcco#confidenceScore
+avcco:confidenceScore rdf:type owl:DatatypeProperty ;
+                      rdfs:domain avcco:CornerCase ;
+                      rdfs:range xsd:float .
+
+
+###  http://cornercase.org/avcco#eventSeverity
+avcco:eventSeverity rdf:type owl:DatatypeProperty ;
+                    rdfs:domain avcco:CornerCase ;
+                    rdfs:range xsd:int .
+
+
+###  http://cornercase.org/avcco#fusedConfidence
+avcco:fusedConfidence rdf:type owl:DatatypeProperty ;
+                      rdfs:domain avcco:Situation ;
+                      rdfs:range xsd:float ;
+                      rdfs:comment "Edge-fused probability of the Situation's primary belief class." ;
+                      rdfs:label "fusedConfidence" .
+
+
+###  http://cornercase.org/avcco#headingDeg
+avcco:headingDeg rdf:type owl:DatatypeProperty ;
+                 rdfs:domain avcco:KinematicState ;
+                 rdfs:range xsd:float ;
+                 rdfs:comment "Vehicle heading in degrees (0-360, clockwise from North) at observation time." ;
+                 rdfs:label "headingDeg" .
+
+
+###  http://cornercase.org/avcco#lidarEngagementLevel
+avcco:lidarEngagementLevel rdf:type owl:DatatypeProperty ;
+                           rdfs:domain avcco:Observation ;
+                           rdfs:range xsd:int ;
+                           rdfs:comment "Discrete level of LiDAR engagement used for the observation (e.g., 0,1,3,5 under the PlanB 4:1 scheme)." ;
+                           rdfs:label "lidarEngagementLevel" .
+
+
+###  http://cornercase.org/avcco#locationLatitude
+avcco:locationLatitude rdf:type owl:DatatypeProperty ;
+                       rdfs:domain avcco:CornerCase ;
+                       rdfs:range xsd:float .
+
+
+###  http://cornercase.org/avcco#locationLongitude
+avcco:locationLongitude rdf:type owl:DatatypeProperty ;
+                        rdfs:domain avcco:CornerCase ;
+                        rdfs:range xsd:float .
+
+
+###  http://cornercase.org/avcco#prob
+avcco:prob rdf:type owl:DatatypeProperty ;
+           rdfs:domain avcco:ClassBelief ;
+           rdfs:range xsd:float ;
+           rdfs:comment "Probability mass for the associated class (0..1)." ;
+           rdfs:label "prob" .
+
+
+###  http://cornercase.org/avcco#radiusMeters
+avcco:radiusMeters rdf:type owl:DatatypeProperty ;
+                   rdfs:domain avcco:GeoRegion ;
+                   rdfs:range xsd:float ;
+                   rdfs:comment "Radius of the circular geofence in meters." ;
+                   rdfs:label "radiusMeters" .
+
+
+###  http://cornercase.org/avcco#sensorAccuracy
+avcco:sensorAccuracy rdf:type owl:DatatypeProperty ;
+                     rdfs:domain avcco:CornerCase ;
+                     rdfs:range xsd:float .
+
+
+###  http://cornercase.org/avcco#speedMps
+avcco:speedMps rdf:type owl:DatatypeProperty ;
+               rdfs:domain avcco:KinematicState ;
+               rdfs:range xsd:float ;
+               rdfs:comment "Vehicle speed in meters per second at observation time." ;
+               rdfs:label "speedMps" .
+
+
+###  http://cornercase.org/avcco#timestamp
+avcco:timestamp rdf:type owl:DatatypeProperty ;
+                rdfs:domain avcco:CornerCase ;
+                rdfs:range xsd:dateTime .
+
+
+###  http://www.w3.org/ns/prov#generatedAtTime
+prov:generatedAtTime rdf:type owl:DatatypeProperty ;
+                     rdfs:domain prov:Entity ;
+                     rdfs:range xsd:dateTime ;
+                     rdfs:comment "Timestamp when the entity was generated." ;
+                     rdfs:label "generatedAtTime" .
+
+
+#################################################################
+#    Classes
+#################################################################
+
+###  http://cornercase.org/avcco#Agent
+avcco:Agent rdf:type owl:Class ;
+            rdfs:subClassOf prov:Agent ;
+            rdfs:comment "A vehicle or on-board software agent responsible for generation activities." ;
+            rdfs:label "AVCC Agent" .
+
+
+###  http://cornercase.org/avcco#BehaviorAnomaly
+avcco:BehaviorAnomaly rdf:type owl:Class ;
+                      rdfs:subClassOf avcco:CornerCase ;
+                      rdfs:comment """A corner case involving unexpected or abnormal behavior from other road users (vehicles, pedestrians, cyclists, etc.) that violates traffic norms or defies predictive models.
+
+These cases challenge the AV's ability to interpret and react to out-of-distribution behaviors not well-represented in training data. They often require fast real-time reasoning, re-evaluation of intent prediction, and safe fallback maneuvers.
+
+cornercases examples:
+- A vehicle drives the wrong way on a one-way street.
+- A pedestrian starts to cross but suddenly turns back or hesitates.
+- A cyclist weaves erratically between lanes.
+- A car runs a red light or stop sign.
+- A person intentionally jumps into traffic (e.g., edge-case protest or mental health crisis).
+
+Unexpected behavior cases are critical for testing the AV’s resilience to edge-case actor dynamics, especially when intent prediction fails or contradicts observed actions.""" ;
+                      rdfs:label "BehaviorAnomaly" .
+
+
+###  http://cornercase.org/avcco#CameraFeed
+avcco:CameraFeed rdf:type owl:Class ;
+                 rdfs:subClassOf avcco:SensorModality ;
+                 rdfs:comment """Represents visual data captured by a camera sensor mounted on the autonomous vehicle, typically in the form of RGB or grayscale images, video frames, or depth maps.
+
+Camera feeds are a primary source of perception information used for detecting road signs, lane markings, pedestrians, vehicles, and other obstacles. They may suffer from occlusion, glare, motion blur, or lighting-related issues in adverse conditions.
+
+cornercases:
+- Front-facing RGB video used for lane and vehicle detection
+- Surround-view or fisheye images for blind spot monitoring
+- Infrared (IR) feeds for night-time pedestrian detection
+- Datasets of annotated frames collected for machine learning
+
+CameraFeed is a subclass of SensorData and may be fused with other modalities (e.g., LiDAR) for robust scene understanding.""" ;
+                 rdfs:label "CameraFeed" .
+
+
+###  http://cornercase.org/avcco#ClassBelief
+avcco:ClassBelief rdf:type owl:Class ;
+                  rdfs:comment "Per-class probability entry summarizing a Situation's belief for a class." ;
+                  rdfs:label "ClassBelief" .
+
+
+###  http://cornercase.org/avcco#Context
+avcco:Context rdf:type owl:Class ;
+              rdfs:comment """Represents supplementary situational information that provides interpretive background for a corner case, beyond what is captured by discrete entities like events, agents, or environmental conditions.
+
+Context helps explain *why* a particular situation might be risky, exceptional, or misinterpreted. It often includes spatial, temporal, semantic, or social dimensions, and enables more accurate reasoning, prediction, or explanation of AV behavior.
+
+cornercases:
+- A school zone during dismissal time, increasing the likelihood of children near the road
+- A blind corner where visibility is limited despite good weather
+- A busy downtown area with high pedestrian unpredictability
+- A poorly maintained road contributing to erratic driving or obstacle avoidance
+- A special event (e.g., parade) temporarily altering normal traffic flow
+
+The Context class can be linked to other classes (e.g., RoadElement, EnvironmentalCondition, Event) and may be used for risk modeling, scenario annotation, or adaptive behavior planning.""" ;
+              rdfs:label "Context" .
+
+
+###  http://cornercase.org/avcco#CornerCase
+avcco:CornerCase rdf:type owl:Class ;
+                 rdfs:subClassOf prov:Entity ;
+                 rdfs:comment """Represents a rare, unexpected, or cognitively challenging scenario that tests the limits of an autonomous vehicle’s perception, reasoning, or control systems.
+
+Corner cases typically deviate from the normal distribution of training or operational data and may involve unusual behaviors, ambiguous visual inputs, or complex environmental conditions. They are critical for evaluating system robustness, safety, and generalization performance.
+
+cornercases:
+- A pedestrian darting into the road from behind a van
+- A billboard that resembles a STOP sign
+- A vehicle driving the wrong way on a one-way street
+- A ball rolling into the road, possibly indicating a child nearby
+- A suitcase falling off the roof of a moving car
+
+CornerCase serves as the central class in this ontology and can be specialized into subclasses such as VisualAmbiguityCase, UnexpectedBehaviorCase, PerceptionFailureCase, SensorBlindSpotCase, and others. It is typically associated with agents, sensor data, road elements, environmental conditions, events, and context.""" ;
+                 rdfs:label "CornerCase" .
+
+
+###  http://cornercase.org/avcco#CornerCaseAlert
+avcco:CornerCaseAlert rdf:type owl:Class ;
+                      rdfs:subClassOf prov:Entity ;
+                      rdfs:comment "Broadcastable semantic message about a potential or ongoing corner case, carrying type, confidence, time, and geofencing metadata." ;
+                      rdfs:label "CornerCaseAlert" .
+
+
+###  http://cornercase.org/avcco#EdgeBroker
+avcco:EdgeBroker rdf:type owl:Class ;
+                 rdfs:subClassOf prov:Agent ;
+                 rdfs:comment "Edge/RSU service that verifies incoming observations/alerts, fuses them into Situations, and broadcasts CornerCaseAlerts." ;
+                 rdfs:label "EdgeBroker" .
+
+
+###  http://cornercase.org/avcco#Event
+avcco:Event rdf:type owl:Class .
+
+
+###  http://cornercase.org/avcco#EvidenceBasedAnomaly
+avcco:EvidenceBasedAnomaly rdf:type owl:Class ;
+                           rdfs:subClassOf avcco:CornerCase ;
+                           rdfs:comment """An evidence-based anomaly refers to a corner case scenario in autonomous driving where early visual or contextual indicators suggest a potential forthcoming hazard. These indicators allow the autonomous vehicle (AV) to prepare for or mitigate the anomaly before it fully manifests.
+
+Such scenarios require both temporal and semantic understanding. The ability to interpret visual cues across time and space in order to make anticipatory decisions. These anomalies challenge the AV to infer risk from subtle or peripheral observations rather than immediate or overt threats.
+
+cornercases include:
+- A soccer ball rolling into the road, implying a child may follow.
+- Luggage beginning to fall from a moving car's roof.
+- A parked vehicle's door slightly ajar, signaling someone may exit.
+- A worker moving behind a van, partially visible only by peripheral motion.
+- A barrel falling from a courier's hand truck into the AV’s lane.
+- An EMS vehicle approaching at high speed while disregarding signals.
+
+Evidence-based anomalies emphasize the need for predictive perception and proactive planning in AV systems, leveraging early cues to maintain safety in complex, dynamic environments.""" ;
+                           rdfs:label "EvidenceBasedAnomaly" .
+
+
+###  http://cornercase.org/avcco#Foggy
+avcco:Foggy rdf:type owl:Class ;
+            rdfs:subClassOf avcco:LowVisibility ;
+            rdfs:comment "Represents scenarios where dense fog reduces visibility for sensors and the driver model. Fog can obscure traffic signs, pedestrians, or vehicles, and degrade LiDAR and camera performance." ;
+            rdfs:label "Foggy" .
+
+
+###  http://cornercase.org/avcco#GPSReading
+avcco:GPSReading rdf:type owl:Class ;
+                 rdfs:subClassOf avcco:SensorModality ;
+                 rdfs:comment """Represents data obtained from the vehicle’s Global Positioning System (GPS), typically providing latitude, longitude, altitude, and sometimes velocity and timestamp.
+
+GPS readings are essential for localization, navigation, and geospatial reasoning. They can also be used to align sensor data with digital maps or simulation environments. In some cases, GPS data may be fused with inertial or visual localization systems to enhance accuracy.
+
+cornercases:
+- Latitude and longitude values recorded at each timestamp during a simulation
+- GPS trails used to reconstruct the vehicle’s route
+- High-definition GPS used in urban environments for lane-level accuracy
+- GPS-based event tagging for geospatial analysis of corner cases
+
+GPSReading is a subclass of SensorData and may be linked to specific events or corner cases through spatial correlation.""" ;
+                 rdfs:label "GPSReading" .
+
+
+###  http://cornercase.org/avcco#GeoRegion
+avcco:GeoRegion rdf:type owl:Class ;
+                rdfs:comment "Geospatial region (e.g., circle corridor) used for relevance filtering and broadcast geofencing." ;
+                rdfs:label "GeoRegion" .
+
+
+###  http://cornercase.org/avcco#KinematicState
+avcco:KinematicState rdf:type owl:Class ;
+                     rdfs:comment "Vehicle state snapshot (heading and speed) associated with an Observation." ;
+                     rdfs:label "KinematicState" .
+
+
+###  http://cornercase.org/avcco#LiDARPointCloud
+avcco:LiDARPointCloud rdf:type owl:Class ;
+                      rdfs:subClassOf avcco:SensorModality ;
+                      rdfs:comment """Represents raw or processed 3D spatial data captured by a Light Detection and Ranging (LiDAR) sensor, typically in the form of point clouds representing the vehicle’s surroundings.
+
+Each point in the cloud corresponds to a distance measurement from the sensor to a surface in the environment, often including intensity, timestamp, and reflectivity attributes. LiDARPointCloud data enables accurate depth perception, object segmentation, and scene reconstruction in autonomous vehicles.
+
+cornercases:
+- A 360-degree point cloud showing nearby vehicles, curbs, and pedestrians
+- High-density LiDAR scans used for 3D object detection and tracking
+- Sparse point clouds captured at high speed with low resolution
+- Annotated LiDAR data used for training and validating perception models
+
+This class is a subclass of SensorData and is commonly used in sensor fusion pipelines with camera or radar data for robust scene understanding.""" ;
+                      rdfs:label "LiDARPointCloud" .
+
+
+###  http://cornercase.org/avcco#LowVisibility
+avcco:LowVisibility rdf:type owl:Class ;
+                    rdfs:subClassOf avcco:WeatherCondition ;
+                    rdfs:comment """Describes a general environmental condition where the autonomous vehicle’s visibility range is significantly reduced due to factors such as weather, lighting, or obstructions.
+
+This condition affects both human and machine perception, potentially degrading camera, LiDAR, and radar inputs. It often co-occurs with other environmental states like fog, heavy rain, snow, smoke, or bright glare.
+
+cornercases:
+- Heavy fog obscuring road signs and pedestrians
+- Dense smoke from a roadside fire affecting LiDAR returns
+- Nighttime driving without adequate street lighting
+- Intense sunlight causing forward-facing camera glare
+- Dust storms or snow flurries creating visual ambiguity
+
+Low visibility is a key risk factor in many corner cases, as it can lead to perception failure, delayed reaction, and misclassification of objects.""" ;
+                    rdfs:label "LowVisibility" .
+
+
+###  http://cornercase.org/avcco#Night
+avcco:Night rdf:type owl:Class ;
+            rdfs:subClassOf avcco:LowVisibility ;
+            rdfs:comment "Describes nighttime driving conditions where limited lighting affects the AV’s visual and sensor perception. Low ambient light may cause misdetections or missed detections, particularly for small or unlit objects." ;
+            rdfs:label "Night" .
+
+
+###  http://cornercase.org/avcco#Observation
+avcco:Observation rdf:type owl:Class ;
+                  rdfs:subClassOf prov:Entity ;
+                  rdfs:comment "A single vehicle's local evidence supporting a corner case hypothesis (with provenance, modality, and confidence)." ;
+                  rdfs:label "Observation" .
+
+
+###  http://cornercase.org/avcco#OcclusionEvent
+avcco:OcclusionEvent rdf:type owl:Class ;
+                     rdfs:subClassOf avcco:Event ;
+                     rdfs:comment "An event where one entity (occluder) partially or completely blocks the sensor's view of another entity (occluded)." .
+
+
+###  http://cornercase.org/avcco#PerceptionFailureCase
+avcco:PerceptionFailureCase rdf:type owl:Class ;
+                            rdfs:subClassOf avcco:CornerCase ;
+                            rdfs:comment """A perception failure case represents a corner case in which the autonomous vehicle (AV) incorrectly detects, misclassifies, or entirely misses an object, actor, or relevant scene element due to limitations in its perception system.
+
+These failures may stem from challenging environmental conditions, sensor occlusion, object ambiguity, limited field of view, or model-level misinterpretations. Unlike state anomalies, which arise from semantic confusion, perception failures are often rooted in raw sensory inaccuracies or system blind spots.
+
+cornercases include:
+- A pedestrian partially occluded by a parked van is not detected in time.
+- A trash bag is falsely identified as a small child, prompting an unnecessary stop.
+- Road markings obscured by snow lead to incorrect lane positioning.
+- An emergency vehicle is not recognized due to poor lighting and sensor noise.
+- A glare from the sun blinds the forward-facing camera, causing a missed STOP sign.
+- A cyclist in a blind spot is not detected during a lane change.
+
+PerceptionFailureCase is critical for evaluating the robustness of the AV’s object detection, tracking, and classification systems under real-world constraints.""" ;
+                            rdfs:label "PerceptionFailureCase" .
+
+
+###  http://cornercase.org/avcco#ReasoningActivity
+avcco:ReasoningActivity rdf:type owl:Class ;
+                        rdfs:subClassOf prov:Activity ;
+                        rdfs:comment "The computational step (on-vehicle or edge) that reasons over one or more avcco:Observation entities and generates derived entities such as avcco:Situation and avcco:ClassBelief. Link inputs via prov:used and outputs via prov:wasGeneratedBy; associate the executing agent with prov:wasAssociatedWith a prov:Agent." ;
+                        rdfs:label "Reasoning Activity" .
+
+
+###  http://cornercase.org/avcco#RoadElement
+avcco:RoadElement rdf:type owl:Class ;
+                  rdfs:comment """Represents a physical or structural component of the road infrastructure relevant to AV navigation and corner case localization.
+
+Road elements provide contextual grounding for events, obstacles, and actor behavior. They can influence AV behavior through traffic rules, geometry, and visibility, and serve as anchors for scene understanding and spatial reasoning.
+
+cornercases:
+- Intersections (e.g., four-way stop, T-junction)
+- Crosswalks or pedestrian crossings
+- Roundabouts, merges, and off-ramps
+- Road shoulders, medians, or curbs
+- Lanes and lane markings
+- Parking zones or bus stops
+
+Understanding road elements allows the AV to assess legal constraints, anticipate potential hazards, and infer behavioral intent of other agents.""" ;
+                  rdfs:label "RoadElement" .
+
+
+###  http://cornercase.org/avcco#SensorBlindSpotCase
+avcco:SensorBlindSpotCase rdf:type owl:Class ;
+                          rdfs:subClassOf avcco:CornerCase ;
+                          rdfs:comment """A corner case where an object, hazard, or event goes undetected due to limitations in the AV's sensor field of view or coverage.
+
+These cases occur when the object is outside the effective sensing range, occluded by other objects, or positioned in known sensor blind spots. Unlike perception failures that result from incorrect classification, blind spot cases stem from the absence of detection altogether.
+
+cornercases:
+- A child running from behind a parked van is not detected due to occlusion.
+- A motorcycle rides in the blind spot between the rear and side cameras during a lane change.
+- A pedestrian crosses behind the vehicle while backing up, outside rear camera view.
+- A drone flies overhead, beyond the vertical sensing range of installed LiDAR or cameras.""" ;
+                          rdfs:label "SensorBlindSpotCase" .
+
+
+###  http://cornercase.org/avcco#SensorModality
+avcco:SensorModality rdf:type owl:Class ;
+                     rdfs:comment """Represents data captured by the autonomous vehicle's sensors during a driving scenario, typically used to detect, classify, and track environmental elements, actors, and anomalies.
+
+Sensor data forms the observational basis for evaluating perception accuracy, diagnosing failures, and justifying responses in corner case scenarios. It may include raw or processed outputs from vision, depth, positional, or environmental sensors.
+
+cornercases:
+- Camera images (RGB or IR)
+- LiDAR point clouds showing object contours or depth maps
+- GPS readings for localization
+- Radar returns indicating object velocity or distance
+- Ultrasonic proximity readings
+- IMU (inertial measurement unit) data
+
+Instances of this class are often linked to events or conditions and may carry metadata such as timestamps, frame IDs, confidence scores, and sensor fidelity levels.""" ;
+                     rdfs:label "SensorModality" .
+
+
+###  http://cornercase.org/avcco#Situation
+avcco:Situation rdf:type owl:Class ;
+                rdfs:subClassOf prov:Entity ;
+                rdfs:comment "Aggregated, fused event maintained by the edge; groups multiple observations referring to the same real-world occurrence." ;
+                rdfs:label "Situation" .
+
+
+###  http://cornercase.org/avcco#SituationState
+avcco:SituationState rdf:type owl:Class ;
+                     rdfs:comment "Finite state for agreement/disagreement during collaborative fusion." ;
+                     rdfs:label "SituationState" .
+
+
+###  http://cornercase.org/avcco#StateAnomaly
+avcco:StateAnomaly rdf:type owl:Class ;
+                   rdfs:subClassOf avcco:CornerCase ;
+                   rdfs:comment """A state anomaly refers to a corner case where there is a mismatch between an object’s visual or contextual appearance and its expected semantic meaning, leading the autonomous vehicle (AV) to misinterpret its function or classification.
+
+These anomalies typically arise when objects in the environment are visually or semantically ambiguous, such as advertisements, artworks, or clothing that resemble traffic-relevant entities. State anomalies often result in incorrect perception and inappropriate vehicle behavior, such as unnecessary braking, stopping, or yielding.
+
+cornercases include:
+- A billboard resembling a STOP sign, causing the AV to halt unnecessarily.
+- An ad featuring a traffic light with the phrase \"go for sale\", misclassified as an actual green signal.
+- A pedestrian wearing a T-shirt printed with a traffic sign.
+- A soft drink ad with a turn symbol or the word \"yield\", prompting the AV to maneuver incorrectly.
+- A \"STOP\" message embedded in an unrelated context, like a sneeze-themed ad or dinner promotion.
+- A \"parking ahead\" sign meant only for bar patrons, misinterpreted as a public parking indicator.
+
+These scenarios highlight the importance of robust visual-semantic reasoning in AV systems and the need to differentiate between true traffic indicators and misleading visual artifacts.""" ;
+                   rdfs:label "StateAnomaly" .
+
+
+###  http://cornercase.org/avcco#Vehicle
+avcco:Vehicle rdf:type owl:Class ;
+              rdfs:comment """Represents any motorized road entity capable of movement, including cars, trucks, buses, motorcycles, or autonomous vehicles.
+
+Vehicles can act as agents or obstacles in corner cases, and their behavior is critical for AV reasoning. Their roles may vary based on motion (moving vs. parked), compliance (law-abiding vs. rule-breaking), or interaction with road infrastructure and other agents.
+
+cornercases:
+- A car merging into the AV’s lane without signaling (VehicleCutIn)
+- A stopped bus blocking the AV’s lane
+- An oncoming vehicle driving the wrong way on a one-way street
+- An emergency vehicle approaching with lights and sirens active
+- A parked vehicle with a door suddenly opening
+
+The class includes specialized subclasses such as EmergencyVehicle, ParkedVehicle, and AutonomousVehicle, each capturing a unique behavioral or operational role in corner case modeling.""" ;
+              rdfs:label "Vehicle" .
+
+
+###  http://cornercase.org/avcco#VisualAmbiguityCase
+avcco:VisualAmbiguityCase rdf:type owl:Class ;
+                          rdfs:subClassOf avcco:CornerCase ;
+                          rdfs:comment """Represents a corner case where an object or scene element visually resembles something else, leading to confusion or incorrect interpretation by the AV's perception system.
+
+These scenarios often exploit the limitations of computer vision models or sensor fusion pipelines, especially in environments where visual cues are ambiguous, distorted, spoofed, or misleading. VisualAmbiguityCase is typically a type of PerceptionFailureCase.
+
+cornercases:
+- A billboard resembling a STOP sign causing the AV to halt unnecessarily
+- A pedestrian wearing a T-shirt with a printed traffic sign
+- A sticker on a wall mimicking a lane marking
+- An ad featuring a green traffic light or arrow prompting false go-ahead behavior
+- A bag or shadow on the road misclassified as a small animal or obstacle
+
+These cases highlight the importance of context-aware perception and semantic reasoning in AV safety systems.""" ;
+                          rdfs:label "VisualAmbiguityCase" .
+
+
+###  http://cornercase.org/avcco#WeatherCondition
+avcco:WeatherCondition rdf:type owl:Class ;
+                       rdfs:comment """Represents external atmospheric or environmental factors that may impact an autonomous vehicle’s perception, localization, or decision-making capabilities.
+
+Environmental conditions often introduce noise, occlusions, or uncertainty in sensor readings and significantly affect AV performance. They provide crucial contextual information when analyzing or simulating corner cases, especially in adverse or non-ideal settings.
+
+cornercases:
+- Low visibility due to fog, heavy rain, or smoke
+- Nighttime lighting conditions
+- Bright glare from sun or headlights
+- Slippery roads due to snow or ice
+- Wind-blown debris affecting detection or navigation
+
+Environmental conditions are key parameters in both simulation (e.g., CARLA scenarios) and real-world testing, and they often serve as modifiers that elevate routine scenarios into corner cases.""" ;
+                       rdfs:label "EnvironmentalCondition" .
+
+
+###  http://purl.org/ontology/avcc#IllegalLaneChange
+avcc:IllegalLaneChange rdf:type owl:Class ;
+                       rdfs:subClassOf avcc:TrafficViolation ;
+                       rdfs:comment "The agent merged or changed lanes in an unauthorized or unsafe manner." ;
+                       rdfs:label "IllegalLaneChange" .
+
+
+###  http://purl.org/ontology/avcc#RedLightViolation
+avcc:RedLightViolation rdf:type owl:Class ;
+                       rdfs:subClassOf avcc:TrafficViolation ;
+                       rdfs:comment "The agent ran a red light." ;
+                       rdfs:label "RedLightViolation" .
+
+
+###  http://purl.org/ontology/avcc#SpeedingViolation
+avcc:SpeedingViolation rdf:type owl:Class ;
+                       rdfs:subClassOf avcc:TrafficViolation ;
+                       rdfs:comment "The agent exceeded the speed limit." ;
+                       rdfs:label "SpeedingViolation" .
+
+
+###  http://purl.org/ontology/avcc#TrafficViolation
+avcc:TrafficViolation rdf:type owl:Class ;
+                      rdfs:comment """Represents an act or behavior by a road user that violates traffic laws or expected driving rules, often contributing to corner cases by introducing risk, unpredictability, or legal non-compliance.
+
+cornercases:
+- Running a red light
+- Speeding through an intersection
+- Illegal lane change
+- Failure to yield
+- Driving the wrong way on a one-way street.""" ;
+                      rdfs:label "Traffic Violation" .
+
+
+###  http://www.w3.org/2002/07/mydomain.com#AutonomousVehicle
+<http://www.w3.org/2002/07/mydomain.com#AutonomousVehicle> rdf:type owl:Class ;
+                                                           rdfs:subClassOf avcco:Vehicle ;
+                                                           rdfs:comment """Represents a vehicle equipped with autonomous driving capabilities, either under test or actively operating without human intervention.
+
+AutonomousVehicle entities may act as the primary system under evaluation in simulation environments, or as other AVs in multi-agent scenarios. Their interactions with corner cases are of particular interest in control and decision-making assessments.
+
+cornercases:
+- The ego vehicle being tested in CARLA simulations
+- Other AVs operating under different autonomy stacks in the same scenario
+- Cooperative or competitive AV behavior in complex urban settings
+
+This class allows differentiation between human-driven and machine-driven vehicle agents in corner case analysis.""" ;
+                                                           rdfs:label "AutonomousVehicle" .
+
+
+###  http://www.w3.org/2002/07/mydomain.com#EmergencyVehicle
+<http://www.w3.org/2002/07/mydomain.com#EmergencyVehicle> rdf:type owl:Class ;
+                                                          rdfs:subClassOf avcco:Vehicle ;
+                                                          rdfs:comment """Represents a vehicle designated for emergency response, such as ambulances, fire trucks, or police vehicles. These vehicles may operate under special traffic privileges and often behave unpredictably from an AV’s perspective (e.g., running red lights, stopping abruptly, blocking lanes).
+
+cornercases:
+- A police car blocking an intersection
+- An ambulance entering a roundabout at high speed with sirens active
+- A fire truck stopped near an incident, partially in the AV’s lane
+
+Emergency vehicles are critical in corner case evaluation due to their non-standard behavior and high-priority status in right-of-way decisions.""" ;
+                                                          rdfs:label "EmergencyVehicle" .
+
+
+###  http://www.w3.org/2002/07/mydomain.com#FusedSensorData
+<http://www.w3.org/2002/07/mydomain.com#FusedSensorData> rdf:type owl:Class ;
+                                                         rdfs:subClassOf avcco:SensorModality ;
+                                                         rdfs:comment """Represents processed data derived from the fusion of multiple sensor modalities, such as LiDAR, camera, and radar. FusedSensorData is used to improve perception reliability and resolve ambiguities in raw sensor readings.
+
+    cornercases:
+    - Camera + LiDAR fusion for robust 3D object detection
+    - Radar + camera fusion for improved object tracking in poor visibility
+    - Multi-sensor fusion used in decision-making for emergency braking
+
+This class enables reasoning about multi-modal perception and supports traceability for complex event interpretations.""" ;
+                                                         rdfs:label "FusedSensorData" .
+
+
+###  http://www.w3.org/2002/07/mydomain.com#Glare
+<http://www.w3.org/2002/07/mydomain.com#Glare> rdf:type owl:Class ;
+                                               rdfs:subClassOf avcco:LowVisibility ;
+                                               rdfs:comment "A specific low-visibility condition caused by sunlight reflecting off surfaces, directly affecting camera performance and perception accuracy." ;
+                                               rdfs:label "Glare" .
+
+
+###  http://www.w3.org/2002/07/mydomain.com#ParkedVehicle
+<http://www.w3.org/2002/07/mydomain.com#ParkedVehicle> rdf:type owl:Class ;
+                                                       rdfs:subClassOf avcco:Vehicle ;
+                                                       rdfs:comment """Represents a vehicle that is stationary and typically located at the side of the road, in a parking spot, or partially obstructing a lane. Parked vehicles can occlude pedestrians, hide moving obstacles, or re-enter traffic unexpectedly.
+
+cornercases:
+- A van parked at the curb hiding a child about to cross
+- A delivery vehicle with doors open and items blocking the road
+- A parked car pulling out into traffic without signaling
+
+ParkedVehicle is a common element in evidence-based anomalies due to the visual and physical obstructions it introduces.""" ;
+                                                       rdfs:label "ParkedVehicle" .
+
+
+###  http://www.w3.org/2002/07/mydomain.com#Rainy
+<http://www.w3.org/2002/07/mydomain.com#Rainy> rdf:type owl:Class ;
+                                               rdfs:subClassOf avcco:LowVisibility ;
+                                               rdfs:comment "Represents rainy weather conditions where water on the windshield, road, and camera lens can distort visual perception and introduce sensor noise." ;
+                                               rdfs:label "Rainy" .
+
+
+###  http://www.w3.org/2002/07/mydomain.com#Snowy
+<http://www.w3.org/2002/07/mydomain.com#Snowy> rdf:type owl:Class ;
+                                               rdfs:subClassOf avcco:LowVisibility ;
+                                               rdfs:comment "Describes snowy conditions that may obscure road markings and signage, introduce slippage risk, and significantly impair perception systems like LiDAR and radar." ;
+                                               rdfs:label "Snowy" .
+
+
+###  http://www.w3.org/2002/07/owl#Class
+owl:Class rdf:type owl:Class .
+
+
+###  http://www.w3.org/ns/prov#Activity
+prov:Activity rdf:type owl:Class .
+
+
+###  http://www.w3.org/ns/prov#Agent
+prov:Agent rdf:type owl:Class .
+
+
+###  http://www.w3.org/ns/prov#Entity
+prov:Entity rdf:type owl:Class .
+
+
+#################################################################
+#    Individuals
+#################################################################
+
+###  http://cornercase.org/avcco#AGREE
+avcco:AGREE rdf:type owl:NamedIndividual ,
+                     avcco:SituationState ;
+            rdfs:label "AGREE" .
+
+
+###  http://cornercase.org/avcco#CONFLICT
+avcco:CONFLICT rdf:type owl:NamedIndividual ,
+                        avcco:SituationState ;
+               rdfs:label "CONFLICT" .
+
+
+###  http://cornercase.org/avcco#CONTENT
+avcco:CONTENT rdf:type owl:NamedIndividual ,
+                       avcco:SituationState ;
+              rdfs:label "CONTENT." .
+
+
+###  Generated by the OWL API (version 4.5.29.2024-05-13T12:11:03Z) https://github.com/owlcs/owlapi

@@ -1,0 +1,17 @@
+.env
+venv
+output/*
+!output/.gitkeep
+Lowe\ Confidance/
+vehicle_B_observation.py
+vehicle_C_observation.py
+old_avcc_ontology_with_labels.ttl
+observation_fusion.py
+edge_observation_fusion.py
+psuedocode.py
+**/.DS_Store
+*/.DS_Store
+.DS_Store
+.idea
+__pycache__/
+CARLA_DATASET_MULTI_AGENTS/*
