@@ -14,4 +14,4 @@ psuedocode.py
 .DS_Store
 .idea
 __pycache__/
-CARLA_DATASET_MULTI_AGENTS/*
+CARLA_DATASET_MULTI_AGENTS/bus_stop_near_playground
