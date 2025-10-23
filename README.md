@@ -114,7 +114,7 @@ ollama pull llava:latest
 ollama pull minicpm-o
 ```
 
-### Running the Pipeline
+# Running the Pipeline
 ## Example Command
 
 ```bash
