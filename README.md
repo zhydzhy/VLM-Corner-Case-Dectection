@@ -14,11 +14,11 @@ The model produces ontology-compliant observations using the AVCCO (Autonomous V
 
 ## Author and Contributions
 
-- **Original Author:** Malik  
+- **Original Author:** Malik Luti, Ian Harshbarger 
 - **Ollama Integration and Documentation:** Haotian Zhang   
 - **Base Models:** Qwen3-cloud
 
-If you use or extend this repository, please cite Malik’s original work.
+If you use or extend this repository, please cite Malik & Ian’s original work.
 
 ---
 
@@ -28,9 +28,9 @@ If you use or extend this repository, please cite Malik’s original work.
 |------------|----------------------------------------|--------------------------------------|--------------|
 | Backend | `openai.ChatCompletion.create()` | `ollama.chat()` | Replaced cloud-based OpenAI API with local Ollama inference |
 | Model | `"gpt-4-vision-preview"` or `"gpt-4o-mini"` | `"minicpm-v"` or `"llava-phi3"` | Migrated to open-source multimodal models |
-| Image Handling | Base64-encoded image blocks | Local image path references | Simplified image passing to local inference |
+| Image Handling | Base64-encoded image blocks | Base64-encoded image Local image  | Converted Image Block into Json Data |
 | Authentication | Requires `OPENAI_API_KEY` | No key required | Ollama runs locally with no network dependency |
-| Deployment | Remote API requests | Local or edge inference | Enables fully offline evaluation |
+| Deployment | Remote API requests | Local | Enables fully offline evaluation |
 | Latency | Network-dependent | Device-dependent | Eliminated cloud latency for real-time testing |
 
 ---
@@ -58,21 +58,6 @@ These can be installed using `pip install -r requirements.txt` if provided, or m
 ```bash
 pip install ollama opencv-python numpy pillow tqdm open3d requests ```
 ```
-
-## Directory Structure
-
-VLM-Corner-Case-Detection/
-├── main.py # Main entrypoint for the pipeline
-├── bev_generator.py # Converts LiDAR .ply data to BEV image
-├── inference_ollama.py # Ollama inference and model interface
-├── ontology/
-│ ├── avcco.ttl
-│ └── prov-o.ttl
-├── data/
-│ ├── images/
-│ └── lidar/
-├── requirements.txt
-└── README.md
 
 ---
 
@@ -231,7 +216,7 @@ ex:vehicleA_obs_activity_1 a prov:Activity ;
 ## License
 
 This project is distributed under the **MIT License**.  
-Please credit **Malik** as the original author and **Haotian Zhang** for the Ollama integration and extended documentation.
+Please credit **Malik Luti** as the original author and **Haotian Zhang** for the Ollama integration and extended documentation.
 
 ---
 
