@@ -1,7 +1,7 @@
 # Vision-Language Corner-Case Detection System
 
 This repository implements a multimodal reasoning pipeline for **autonomous vehicle corner-case detection**, combining RGB camera and LiDAR data with ontology-based reasoning.  
-The project was originally developed by **Malik@malikluti** and later extended with **Ollama API integration** to enable local inference and offline deployment.
+The project was originally developed by **Malik@malikluti** and extended by me with **Ollama API integration** to enable local inference and offline deployment.
 
 ---
 
@@ -127,7 +127,7 @@ python vehicle_A_observation.py
 
 2. Encodes both RGB and BEV images for model input.
 
-3. Sends the data to the selected Ollama model via inference_ollama.py.
+3. Sends the data to the selected Ollama model via ```python get_triples_from_llm()``` fucntion.
 
 4. Receives structured observations following AVCCO and PROV-O ontologies.
 
@@ -216,7 +216,7 @@ ex:vehicleA_obs_activity_1 a prov:Activity ;
 ## License
 
 This project is distributed under the **MIT License**.  
-Please credit **Malik Luti** as the original author and **Haotian Zhang** for the Ollama integration and extended documentation.
+Please credit **Malik Luti** and **Ian Harshbarger** as the original author and **Haotian Zhang** for the Ollama integration and extended documentation.
 
 ---
 
