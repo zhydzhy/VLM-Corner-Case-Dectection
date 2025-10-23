@@ -67,7 +67,7 @@ def point_cloud_to_bev(points):
 def draw_boxes_on_bev(bev_img, boxes, labels, scores):
     # Use Z-channel for base visualization
     z_img = bev_img[0]
-    norm_img = ((z_img - z_img.min()) / (z_img.ptp() + 1e-5) * 255).astype(np.uint8)
+    norm_img = ((z_img - z_img.min()) / (np.ptp(z_img)+ 1e-5) * 255).astype(np.uint8)
     vis_img = cv2.cvtColor(norm_img, cv2.COLOR_GRAY2BGR)
 
     for box, label, score in zip(boxes, labels, scores):

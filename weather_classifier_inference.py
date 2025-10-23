@@ -63,7 +63,7 @@ class WeatherClassifier:
         # Load Model
         # -------------------------
         student = StudentConvNet().to(DEVICE)
-        model_path = r"resnet_student.pth"
+        model_path = r"/home/vlmteam/Qwen3-VLM-Detection/resnet_student.pth"
         state_dict = torch.load(model_path, map_location=DEVICE)
         student.load_state_dict(state_dict)
         student.eval()

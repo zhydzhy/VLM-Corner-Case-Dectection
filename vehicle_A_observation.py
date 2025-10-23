@@ -182,7 +182,7 @@ def get_triples_from_llm(image_paths, prompt, model="qwen3-vl:235b-cloud"):
     data = {
         "model": model,
         "prompt": prompt,
-        "images": images_b64,
+        "images": [images_b64[0]],
         "stream": False
     }
     try:
