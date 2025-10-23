@@ -63,7 +63,11 @@ class WeatherClassifier:
         # Load Model
         # -------------------------
         student = StudentConvNet().to(DEVICE)
-        model_path = r"/home/vlmteam/Qwen3-VLM-Detection/resnet_student.pth"
+        # check current path and load model accordingly
+        model_path = os.path.expanduser(r"resnet_student.pth")
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"Model path {model_path} does not exist")
+        
         state_dict = torch.load(model_path, map_location=DEVICE)
         student.load_state_dict(state_dict)
         student.eval()
