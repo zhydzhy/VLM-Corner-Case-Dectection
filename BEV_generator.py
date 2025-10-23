@@ -8,7 +8,7 @@ from torchvision.models.detection import fasterrcnn_resnet50_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
 # === CONFIGURATION ===
-MODEL_PATH = "frcnn_nuscenes_epoch_50.pth"  # <--- UPDATE THIS
+MODEL_PATH = "/home/vlmteam/Qwen3-VLM-Detection/frcnn_nuscenes_epoch_50.pth"  # <--- UPDATE THIS
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 SCORE_THRESHOLD = 0.3
 

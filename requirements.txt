@@ -1,0 +1,9 @@
+numpy
+torch
+torchvision
+opencv-python
+Pillow
+rdflib
+python-dotenv
+open3d
+ollama

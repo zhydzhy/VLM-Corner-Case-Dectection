@@ -11,13 +11,13 @@ import base64
 import os
 import re
 import glob
-from openai import OpenAI
-from dotenv import load_dotenv
 from rdflib import Graph, RDF, RDFS, OWL
 import weather_classifier_inference as uciclassifier
 import re
 import BEV_generator
-
+import requests
+import base64
+import json
 
 # === Function to encode image as base64 ===
 def encode_image(image_path):
@@ -139,47 +139,60 @@ def compute_avg_classifier_score(image_paths):
     return total_weighted_score / valid_image_count if valid_image_count > 0 else 0.0
 
 
-def get_triples_from_llm(image_paths, prompt):
+def get_triples_from_llm(image_paths, prompt, model="qwen3-vl:235b-cloud"):
     # Prepare the image blocks
-    rgb_image_paths = [image_path for image_path in image_paths if
-                       image_path.lower().endswith(('.png', '.jpg', '.jpeg'))]
-
-    rgb_image_blocks = [
-        {
-            "type": "image_url",
-            "image_url": {
-                "url": f"data:image/png;base64,{encode_image(path)}"
-            },
-        }
-        for path in rgb_image_paths
+    rgb_image_paths = [
+        path for path in image_paths if path.lower().endswith(('.png', '.jpg', '.jpeg'))
     ]
-
+    
+    #print(rgb_image_paths)
+    bev_image_path = None
     try:
-        lidar_image_path = [image_path for image_path in image_paths if image_path.lower().endswith('.ply')]
+        lidar_image_path = [
+            path for path in image_paths if path.lower().endswith('.ply')
+        ]
         if lidar_image_path:
             bev_image_path = BEV_generator.convert_ply_to_png(lidar_image_path[0])
-            bev_image_blocks = [{
-                "type": "image_url",
-                "image_url": {
-                    "url": f"data:image/png;base64,{encode_image(bev_image_path)}"
-                },
-            }]
-
     except Exception as e:
         print(f"Error generating BEV image: {e}")
-        bev_image_blocks = []
+        bev_image_path = None
 
-    image_blocks = rgb_image_blocks + bev_image_blocks if lidar_image_path else rgb_image_blocks
-    content = [{"type": "text", "text": prompt}] + image_blocks
+    valid_images = rgb_image_paths.copy()
+    if bev_image_path and os.path.exists(bev_image_path):
+        valid_images.append(bev_image_path)
 
-    # === GPT-4 Vision API Call ===
-    response = client.chat.completions.create(
-        model="gpt-4.1",
-        messages=[{"role": "user", "content": content}],
-        max_tokens=1000
-    )
+    if not valid_images:
+        print("No valid image found for Ollama input.")
+        return ""
+    images_b64 = []
+    for img_path in valid_images:
+        img_b64 = encode_image(img_path)
+        images_b64.append(img_b64)
+    print(f"Encoded {len(images_b64)} images for Ollama input.")
+    data = {
+        "model": model,
+        "prompt": prompt,
+        "images": images_b64,
+        "stream": False
+    }
 
-    raw_output = response.choices[0].message.content
+    # === Ollama API Call ===
+    url = "http://localhost:11434/api/generate"
+    headers = {"Content-Type": "application/json"}
+    data = {
+        "model": model,
+        "prompt": prompt,
+        "images": images_b64,
+        "stream": False
+    }
+    try:
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+        result = response.json()
+        raw_output = result.get("response", "")
+    except Exception as e:
+        print(f"Ollama HTTP request failed: {e}")
+        return ""
+
     print("=== RAW TTL ===")
     print(raw_output)
 
@@ -203,14 +216,9 @@ def get_triples_from_llm(image_paths, prompt):
         return raw_output.strip().replace("ex/", "ex:") if raw_output else ""
 
 
-# === Load environment variables ===
-load_dotenv(dotenv_path=r"/Users/qamber/Documents/Work/CodeMentor/Mecko/20250914/.venv")
-api_key = os.getenv('API_KEY')
-client = OpenAI(api_key=api_key)
-
 # === Paths ===
-scenarios_folder = r"CARLA_DATASET_MULTI_AGENTS"
-ttl_path = r"avcc_with_reasoning_no_shacl.ttl"
+scenarios_folder = r"/home/vlmteam/Qwen3-VLM-Detection/CARLA_DATASET_MULTI_AGENTS"
+ttl_path = r"/home/vlmteam/Qwen3-VLM-Detection/avcc_with_reasoning_no_shacl.ttl"
 
 main_graph = Graph()
 
@@ -299,10 +307,10 @@ for scenario in os.listdir(scenarios_folder):
 
         print(f"Processing scenario: {scenario}, weather: {weather}, vehicle: A")
 
-        rgbs_folder = os.path.join(vehicle_folder, "RGB")
+        rgbs_folder = os.path.join(vehicle_folder, "rgb")
         if not os.path.isdir(rgbs_folder):  # Also check the folder i not empty
             continue
-        lidar_images_folder = os.path.join(vehicle_folder, "LIDAR")
+        lidar_images_folder = os.path.join(vehicle_folder, "lidar")
         if not os.path.isdir(lidar_images_folder):
             continue
 
@@ -361,7 +369,7 @@ for scenario in os.listdir(scenarios_folder):
             main_graph = main_graph + temp
             print(f"main graph has {len(main_graph)} triples.")
 
-            loop_output_path = os.path.join("output", scenario, weather, str(loop + 1))
+            loop_output_path = "/home/vlmteam/Qwen3-VLM-Detection/output"
             if not os.path.exists(loop_output_path):
                 os.makedirs(os.path.join(loop_output_path))
 
