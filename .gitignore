@@ -17,4 +17,7 @@ psuedocode.py
 __pycache__/
 CARLA_DATASET_MULTI_AGENTS/
 .env.example
+visualization/
+output/
+
 

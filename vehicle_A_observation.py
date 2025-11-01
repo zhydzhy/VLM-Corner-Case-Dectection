@@ -18,7 +18,8 @@ import BEV_generator
 import requests
 import base64
 import json
-
+from transformer_class import UniversalVisionModel
+from PIL import Image
 # === Function to encode image as base64 ===
 def encode_image(image_path):
     with open(image_path, "rb") as img_file:
@@ -139,7 +140,7 @@ def compute_avg_classifier_score(image_paths):
     return total_weighted_score / valid_image_count if valid_image_count > 0 else 0.0
 
 
-def get_triples_from_llm(image_paths, prompt, model="qwen3-vl:235b-cloud"):
+def get_triples_from_llm(image_paths, prompt, model="llava:latest"):
     # Prepare the image blocks
     rgb_image_paths = [
         path for path in image_paths if path.lower().endswith(('.png', '.jpg', '.jpeg'))
@@ -523,8 +524,105 @@ def get_paths_from_raspberry_pi():
     # Implement this function to get image paths from Raspberry Pi
     pass
 
+def prompt_local_file_universal(scenarios_folder, main_graph, prefixes, model_name, prompt):
+    """
+    Runs through all scenario/weather folders, processes RGB/LiDAR image sets,
+    and generates TTL triples using any HuggingFace vision-language model with
+    your own prompt text (not captioner.describe()).
+    """
+    model_runner = UniversalVisionModel(model_name=model_name)
 
-def main(mode="ollama"):
+    for scenario in os.listdir(scenarios_folder):
+        scenario_folder = os.path.join(scenarios_folder, scenario)
+        if not os.path.isdir(scenario_folder):
+            continue
+
+        for weather in os.listdir(scenario_folder):
+            main_graph = Graph()
+            loop = 0
+            adjusted_score = 0.0
+
+            weather_folder = os.path.join(scenario_folder, weather)
+            if not os.path.isdir(weather_folder):
+                continue
+
+            vehicle_folder = os.path.join(weather_folder, "A")
+            if not os.path.isdir(vehicle_folder):
+                continue
+
+            print(f"Processing scenario: {scenario}, weather: {weather}, vehicle: A")
+
+            rgbs_folder = os.path.join(vehicle_folder, "rgb")
+            lidar_folder = os.path.join(vehicle_folder, "lidar")
+
+            if not os.path.isdir(rgbs_folder) or not os.path.isdir(lidar_folder):
+                continue
+
+            rgb_images = sorted(
+                glob.glob(os.path.join(rgbs_folder, "*.png")) +
+                glob.glob(os.path.join(rgbs_folder, "*.jpg"))
+            )
+            lidar_images = sorted(glob.glob(os.path.join(lidar_folder, "*.ply")))
+
+            while (loop * 5) < len(rgb_images):
+                print(f"Loop: {loop}, RGB images: {len(rgb_images)}, LIDAR images: {len(lidar_images)}")
+
+                rgb_selected = rgb_images[loop * 5: (loop * 5) + 5]
+                lidar_selected = [] if loop == 0 else lidar_images[loop - 1:loop]
+                selected_images = rgb_selected + lidar_selected
+
+                # === Step 1: Use model with the existing prompt for each RGB image ===
+                model_outputs = []
+                for img_path in rgb_selected:
+                    try:
+                        image = Image.open(img_path).convert("RGB")
+                        output_text = model_runner.run_prompt(image, prompt)
+                        model_outputs.append(output_text)
+                    except Exception as e:
+                        print(f"Error processing {img_path}: {e}")
+                        continue
+
+                print("=== MODEL OUTPUTS ===")
+                for out in model_outputs:
+                    print(" -", out)
+
+                # === Step 2: Use model outputs as input to your LLM-based TTL generator ===
+                joined_text = " ".join(model_outputs)
+                triples = get_triples_from_llm([joined_text], prompt)
+                print("=== TRIPLES ===")
+                print(triples)
+
+                # === Step 3: Graph management and scoring ===
+                if not triples.startswith("@prefix"):
+                    triples = prefixes + "\n" + triples
+
+                avg_confidence_score = compute_avg_confidence_score(triples) or 0.0
+                avg_classifier_score = compute_avg_classifier_score(selected_images) or 1.0
+                adjusted_score = avg_confidence_score / avg_classifier_score
+
+                print(f"Average Confidence: {avg_confidence_score}, Classifier: {avg_classifier_score}")
+                print("Adjusted Score:", adjusted_score)
+
+                temp = Graph()
+                temp.parse(data=triples, format="turtle")
+                main_graph = main_graph + temp
+                print(f"main graph has {len(main_graph)} triples.")
+
+                # === Step 4: Save results ===
+                output_dir = "/home/vlmteam/Qwen3-VLM-Detection/output"
+                os.makedirs(output_dir, exist_ok=True)
+                loop_file = os.path.join(output_dir, f"vehicle_A_observations_loop.ttl")
+                main_file = os.path.join(output_dir, "vehicle_A_observations.ttl")
+
+                temp.serialize(destination=loop_file, format="turtle")
+                main_graph.serialize(destination=main_file, format="turtle")
+
+                print(f"Loop graph ({len(temp)} triples) saved to {loop_file}")
+                print(f"Main graph ({len(main_graph)} triples) saved to {main_file}")
+
+                loop += 1
+                continue       
+def main(mode="transformers"):
     prefixes = """
     @prefix avcco: <http://cornercase.org/avcco#> .
     @prefix ex:    <http://cornercase.org/instances#> .
@@ -603,10 +701,15 @@ def main(mode="ollama"):
         # Call the function to process images using GPT
         image_paths = get_paths_from_raspberry_pi()  # Implement this function to get image paths
         prompt_rpi_file(image_paths, main_graph, prefixes, client)
-
-
+    elif mode == "transformers":
+        # Call the function to process images using BLIP
+        scenarios_folder = r"/home/vlmteam/Qwen3-VLM-Detection/CARLA_DATASET_MULTI_AGENTS"
+        main_graph = Graph()
+        prompt_local_file_universal(scenarios_folder, main_graph, prefixes, model_name="microsoft/Phi-3.5-vision-instruct", prompt=prompt)
+    else:
+        print("Invalid mode selected. Choose from 'ollama', 'gpt', or 'transformers'.")                                                                         
         
 if __name__ == "__main__":
     print("Starting vehicle A observation process...")
-    mode = input("Enter mode (ollama/gpt): ").strip().lower()
+    mode = input("Enter mode (ollama/gpt/transformers): ").strip().lower()
     main(mode)
