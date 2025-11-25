@@ -71,48 +71,80 @@ def extract_ontology_prompt(ttl_path):
 ##################################
 # 打分1：从 triples 里解析 avcco:hasConfidenceScore
 ##################################
-def compute_avg_confidence_score(triples):
-    confidence_scores = []
-    current_subject = None
-    for line in triples.strip().splitlines():
-        line = line.strip()
-        if not line or line.startswith("@prefix") or line.startswith("#"):
-            continue
+# def compute_avg_confidence_score(triples):
+#     confidence_scores = []
+#     current_subject = None
+#     for line in triples.strip().splitlines():
+#         line = line.strip()
+#         if not line or line.startswith("@prefix") or line.startswith("#"):
+#             continue
 
-        # 模型有时候叫 avcco:confidenceScore，我们也接受
-        if ("hasConfidenceScore" not in line) and ("confidenceScore" not in line):
-            continue
+#         # 模型有时候叫 avcco:confidenceScore，我们也接受
+#         if ("hasConfidenceScore" not in line) and ("confidenceScore" not in line):
+#             continue
 
-        # 如果该行以 ; 或 . 结尾，按 subject predicate object 切
-        if line.endswith(";") or line.endswith("."):
-            parts = line.split(" ", 2)
-            if len(parts) == 3:
-                s, p, o = parts
-                pred_name = p.strip().split(":")[-1]
-                obj_num = o.strip().split("^^")[0].strip('"; ')
-                if pred_name in ["hasConfidenceScore", "confidenceScore"]:
-                    try:
-                        confidence_scores.append(float(obj_num))
-                    except ValueError:
-                        pass
-            current_subject = parts[0].strip().split(":")[-1]
-        else:
-            # continuation 行
-            parts = line.split(" ", 1)
-            if len(parts) == 2 and current_subject:
-                p, o = parts
-                pred_name = p.strip().split(":")[-1]
-                obj_num = o.strip("<>").strip('"')
-                if pred_name in ["hasConfidenceScore", "confidenceScore"]:
-                    try:
-                        confidence_scores.append(float(obj_num))
-                    except ValueError:
-                        pass
+#         # 如果该行以 ; 或 . 结尾，按 subject predicate object 切
+#         if line.endswith(";") or line.endswith("."):
+#             parts = line.split(" ", 2)
+#             if len(parts) == 3:
+#                 s, p, o = parts
+#                 pred_name = p.strip().split(":")[-1]
+#                 obj_num = o.strip().split("^^")[0].strip('"; ')
+#                 if pred_name in ["hasConfidenceScore", "confidenceScore"]:
+#                     try:
+#                         confidence_scores.append(float(obj_num))
+#                     except ValueError:
+#                         pass
+#             current_subject = parts[0].strip().split(":")[-1]
+#         else:
+#             # continuation 行
+#             parts = line.split(" ", 1)
+#             if len(parts) == 2 and current_subject:
+#                 p, o = parts
+#                 pred_name = p.strip().split(":")[-1]
+#                 obj_num = o.strip("<>").strip('"')
+#                 if pred_name in ["hasConfidenceScore", "confidenceScore"]:
+#                     try:
+#                         confidence_scores.append(float(obj_num))
+#                     except ValueError:
+#                         pass
 
-    if confidence_scores:
-        return sum(confidence_scores) / len(confidence_scores)
-    return None
+#     if confidence_scores:
+#         return sum(confidence_scores) / len(confidence_scores)
+#     return None
 
+def compute_avg_confidence_score(triples: str):
+    """
+    Parse avcco:hasConfidenceScore (or avcco:confidenceScore) from Turtle text
+    and return the average as float. Returns None if no valid scores found.
+    """
+    if not triples or not isinstance(triples, str):
+        return None
+
+    g = Graph()
+    try:
+        # 直接用 rdflib 解析 TTL，比按行 string 处理可靠很多
+        g.parse(data=triples, format="turtle")
+    except Exception as e:
+        print("[WARN] compute_avg_confidence_score: RDF parse failed:", e)
+        return None
+
+    scores = []
+
+    for s, p, o in g:
+        pred_str = str(p)
+        if pred_str.endswith("#hasConfidenceScore") or pred_str.endswith("#confidenceScore"):
+            # o 一般是 Literal，比如 "0.9"^^xsd:double
+            try:
+                scores.append(float(o.toPython()))
+            except (TypeError, ValueError):
+                # 如果不是数字 literal，就跳过
+                continue
+
+    if not scores:
+        return None
+
+    return sum(scores) / len(scores)
 
 ##################################
 # 打分2：天气加权 (可选; 如果分类器不可用就当1.0)

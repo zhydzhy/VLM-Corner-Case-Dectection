@@ -6,6 +6,7 @@ import os
 import random
 import numpy as np
 from collections import defaultdict
+import smg
 
 
 def shorten_uri(uri):
@@ -100,7 +101,7 @@ def find_connected_components(graph):
 
 def create_clustered_visualization_high_quality(ttl_file, output_file="rdf_clustered.png", figsize=(20, 16), dpi=400):
     """
-    Create high-quality clustered visualization - BEST QUALITY FOR COMPLEX GRAPHS
+    (kept for reference, not used now)
     """
     # Load the RDF graph
     graph = rdflib.Graph()
@@ -174,11 +175,8 @@ def create_clustered_visualization_high_quality(ttl_file, output_file="rdf_clust
     plt.axis('off')
     plt.tight_layout()
 
-    # Save with maximum quality (FIXED: removed optimize parameter)
-    plt.savefig(output_file, dpi=dpi, bbox_inches='tight',
-                facecolor='white', edgecolor='none',
-                transparent=False, format='png')
-    print(f"✅ ULTRA-QUALITY Clustered visualization saved to: {os.path.abspath(output_file)}")
+    # 现在不再保存 PNG
+    # plt.savefig(...)
     plt.show()
 
     return component_subgraphs, nx_graph
@@ -186,7 +184,7 @@ def create_clustered_visualization_high_quality(ttl_file, output_file="rdf_clust
 
 def create_standard_visualization_high_quality(ttl_file, output_file="rdf_standard.png", figsize=(20, 16), dpi=400):
     """
-    Create high-quality standard visualization - BEST FOR SIMPLE GRAPHS
+    (kept for reference, not used now)
     """
     # Load the RDF graph
     graph = rdflib.Graph()
@@ -265,19 +263,9 @@ def create_standard_visualization_high_quality(ttl_file, output_file="rdf_standa
               fontsize=18, fontweight='bold', pad=25)
     plt.axis('off')
 
-    # Enhanced legend
-    plt.scatter([], [], c='#1f77b4', label='Subjects', s=200, edgecolors='black')
-    plt.scatter([], [], c='#2ca02c', label='Objects', s=200, edgecolors='black')
-    plt.legend(scatterpoints=1, frameon=True, fancybox=True,
-               shadow=True, framealpha=0.95, fontsize=14, loc='upper left')
-
     plt.tight_layout()
-
-    # Save with maximum quality (FIXED: removed optimize parameter)
-    plt.savefig(output_file, dpi=dpi, bbox_inches='tight',
-                facecolor='white', edgecolor='none',
-                transparent=False, format='png')
-    print(f"✅ ULTRA-QUALITY Standard visualization saved to: {os.path.abspath(output_file)}")
+    # 现在不再保存 PNG
+    # plt.savefig(...)
 
     plt.show()
     return nx_graph, graph
@@ -286,6 +274,7 @@ def create_standard_visualization_high_quality(ttl_file, output_file="rdf_standa
 def choose_best_visualization(ttl_file, output_directory, dpi=400):
     """
     Automatically choose the best visualization method based on graph characteristics
+    (kept but not used in main; PNG export disabled)
     """
     # Load graph to analyze
     graph = rdflib.Graph()
@@ -296,12 +285,10 @@ def choose_best_visualization(ttl_file, output_directory, dpi=400):
 
     # Decision logic for best visualization
     if len(components) > 1:
-        # Multiple connected components - use clustered visualization
         print("🎯 Multiple connected components detected - using CLUSTERED visualization")
         output_file = os.path.join(output_directory, "rdf_BEST_QUALITY_clustered.png")
         return create_clustered_visualization_high_quality(ttl_file, output_file, dpi=dpi)
     else:
-        # Single connected component - use standard visualization
         print("🎯 Single connected component detected - using STANDARD visualization")
         output_file = os.path.join(output_directory, "rdf_BEST_QUALITY_standard.png")
         return create_standard_visualization_high_quality(ttl_file, output_file, dpi=dpi)
@@ -310,6 +297,7 @@ def choose_best_visualization(ttl_file, output_directory, dpi=400):
 def export_ultra_quality_vector_formats(ttl_file, output_base_name="rdf_ultra_quality"):
     """
     Export to vector formats for maximum quality - BEST FOR PUBLICATIONS
+    (kept but not used now; SVG/PDF/PNG export commented out)
     """
     graph = rdflib.Graph()
     graph.parse(ttl_file, format='turtle')
@@ -325,10 +313,8 @@ def export_ultra_quality_vector_formats(ttl_file, output_base_name="rdf_ultra_qu
 
     pos = nx.spring_layout(nx_graph, k=2, iterations=200, seed=42)
 
-    # Create ultra-quality plot
     plt.figure(figsize=(20, 16))
 
-    # Enhanced graph elements
     subject_nodes = [node for node, attr in nx_graph.nodes(data=True) if attr.get('type') == 'subject']
     object_nodes = [node for node, attr in nx_graph.nodes(data=True) if attr.get('type') == 'object']
 
@@ -355,15 +341,10 @@ def export_ultra_quality_vector_formats(ttl_file, output_base_name="rdf_ultra_qu
     plt.axis('off')
     plt.tight_layout()
 
-    # Ultra-quality exports (FIXED: removed optimize parameter)
-    plt.savefig(f"{output_base_name}.svg", format='svg', bbox_inches='tight')
-    print(f"✅ ULTRA-QUALITY SVG saved to: {os.path.abspath(output_base_name)}.svg")
-
-    plt.savefig(f"{output_base_name}.pdf", format='pdf', bbox_inches='tight')
-    print(f"✅ ULTRA-QUALITY PDF saved to: {os.path.abspath(output_base_name)}.pdf")
-
-    plt.savefig(f"{output_base_name}_ultra.png", dpi=600, bbox_inches='tight')
-    print(f"✅ ULTRA-QUALITY PNG saved to: {os.path.abspath(output_base_name)}_ultra.png")
+    # 所有图像导出全部注释掉，只作为备选参考
+    # plt.savefig(f"{output_base_name}.svg", format='svg', bbox_inches='tight')
+    # plt.savefig(f"{output_base_name}.pdf", format='pdf', bbox_inches='tight')
+    # plt.savefig(f"{output_base_name}_ultra.png", dpi=600, bbox_inches='tight')
 
     plt.close()
 
@@ -395,6 +376,7 @@ def print_triples_table(graph, max_triples=20):
 def create_interactive_visualization(ttl_file, output_html="rdf_interactive.html"):
     """
     Create an interactive visualization using pyvis
+    (high-contrast colors, big fonts, white background)
     """
     try:
         from pyvis.network import Network
@@ -405,9 +387,15 @@ def create_interactive_visualization(ttl_file, output_html="rdf_interactive.html
     # Load the RDF graph
     graph = rdflib.Graph()
     graph.parse(ttl_file, format='turtle')
+    print(f"Loaded {len(graph)} triples for interactive HTML")
 
-    # Create pyvis network
-    net = Network(height="750px", width="100%", bgcolor="#222222", font_color="white")
+    # Create pyvis network, white background, black default font
+    net = Network(
+        height="900px",
+        width="100%",
+        bgcolor="#ffffff",
+        font_color="#000000"
+    )
 
     # Add nodes and edges
     node_ids = {}
@@ -418,34 +406,78 @@ def create_interactive_visualization(ttl_file, output_html="rdf_interactive.html
         pred_short = shorten_uri(str(predicate))
         obj_short = shorten_uri(str(obj))
 
-        # Add subject node
+        # Add subject node (strong blue)
         if sub_short not in node_ids:
             node_ids[sub_short] = node_counter
-            net.add_node(node_counter, label=sub_short, color='#97c2fc', shape='ellipse')
+            net.add_node(
+                node_counter,
+                label=sub_short,
+                color="#1976d2",       # 深蓝，高对比
+                shape="ellipse",
+                borderWidth=2,
+                font={
+                    "size": 26,
+                    "color": "#000000",
+                    "face": "arial"
+                }
+            )
             node_counter += 1
 
-        # Add object node
+        # Add object node (strong orange)
         if obj_short not in node_ids:
             node_ids[obj_short] = node_counter
-            net.add_node(node_counter, label=obj_short, color='#98FB98', shape='box')
+            net.add_node(
+                node_counter,
+                label=obj_short,
+                color="#ef6c00",       # 橙色，高对比
+                shape="box",
+                borderWidth=2,
+                font={
+                    "size": 26,
+                    "color": "#000000",
+                    "face": "arial"
+                }
+            )
             node_counter += 1
 
-        # Add edge
-        net.add_edge(node_ids[sub_short], node_ids[obj_short],
-                     title=pred_short, label=pred_short, color='white')
+        # Add edge (dark gray, big label with white outline)
+        net.add_edge(
+            node_ids[sub_short],
+            node_ids[obj_short],
+            title=pred_short,
+            label=pred_short,
+            color="#555555",
+            width=2,
+            font={
+                "size": 22,
+                "color": "#000000",
+                "strokeWidth": 4,      # 白色描边，类似白底效果
+                "strokeColor": "#ffffff",
+                "face": "arial",
+                "align": "horizontal"
+            }
+        )
 
-    # Configure physics for better layout
+    # Configure physics + global styling (all fonts bigger)
     net.set_options("""
     var options = {
+      "nodes": {
+        "shadow": false
+      },
+      "edges": {
+        "smooth": {
+          "enabled": false
+        }
+      },
       "physics": {
         "enabled": true,
-        "stabilization": {"iterations": 100}
+        "stabilization": {
+          "iterations": 150
+        }
       }
     }
     """)
 
-    # net.show(output_html)
-    # print(f"✅ Interactive visualization saved to: {os.path.abspath(output_html)}")
     net.write_html(output_html)
     print(f"Interactive visualization saved to: {os.path.abspath(output_html)}")
 
@@ -464,52 +496,27 @@ def filter_by_label(graph):
     return filter_triples(graph, predicate_filter='label')
 
 
-# MAIN EXECUTION - AUTOMATIC BEST QUALITY SELECTION
+# MAIN EXECUTION - HTML ONLY
 if __name__ == "__main__":
     # Your TTL file path
-    ttl_file_path = "single.ttl"
+    ttl_file_path = "./output/vehicle_A_observations_rpi_gpt.ttl"
 
     # Output directory
-    output_directory = "/Users/xueting/Desktop/Visualizations"
-
+    output_directory = "./Visualizations"
     os.makedirs(output_directory, exist_ok=True)
 
     try:
-        print("🔄 Analyzing RDF graph structure for optimal visualization...")
+        print("🔄 Creating INTERACTIVE HTML visualization (only)...")
 
-        # OPTION 1: AUTOMATIC BEST QUALITY VISUALIZATION (Recommended)
-        print("\n🎯 Creating AUTOMATIC BEST QUALITY visualization...")
-        best_result = choose_best_visualization(
-            ttl_file_path,
-            output_directory,
-            dpi=400  # Ultra high DPI
-        )
-
-        # Print triples table
-        if isinstance(best_result[0], list):  # Clustered result
-            print_triples_table(best_result[0][0])  # Print first component
-        else:  # Standard result
-            print_triples_table(best_result[1])
-
-        # OPTION 2: ULTRA-QUALITY VECTOR FORMATS (Best for publications)
-        print("\n🖨️  Exporting ULTRA-QUALITY vector formats...")
-        vector_base = os.path.join(output_directory, "rdf_ultra_quality")
-        export_ultra_quality_vector_formats(ttl_file_path, vector_base)
-
-        # OPTION 3: Interactive visualization
-        print("\n🔗 Creating interactive visualization...")
-        interactive_file = os.path.join(output_directory, "rdf_interactive.html")
+        # 只生成 HTML，不再生成 PNG / SVG / PDF
+        interactive_file = os.path.join(output_directory, "rdf_interactive_bigfont.html")
         create_interactive_visualization(ttl_file_path, interactive_file)
 
-        print("\n✅ ALL ULTRA-QUALITY VISUALIZATIONS COMPLETED!")
-        print(f"📁 Files saved to: {output_directory}")
+        print("\n✅ DONE.")
+        print(f"Open this file in your browser:\n  {interactive_file}")
 
-        print("\n📋 GENERATED FILES:")
-        print(f"  • rdf_BEST_QUALITY_*.png (Automatically chosen best visualization)")
-        print(f"  • rdf_ultra_quality.svg (Publication-quality vector)")
-        print(f"  • rdf_ultra_quality.pdf (Publication-quality PDF)")
-        print(f"  • rdf_ultra_quality_ultra.png (Ultra high-res PNG)")
-        print(f"  • rdf_interactive.html (Interactive web version)")
+        while True:
+            smg.display_number(112)
 
     except FileNotFoundError:
         print(f"File {ttl_file_path} not found. Please check the file path.")
